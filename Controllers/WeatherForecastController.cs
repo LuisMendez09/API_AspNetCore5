@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using netCoreApi.Entidades.Repositorios;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,15 +18,19 @@ namespace netCoreApi.Controllers
         };
 
         private readonly ILogger<WeatherForecastController> _logger;
+        private readonly Irepositorio repositorio;
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger)
+        public WeatherForecastController(ILogger<WeatherForecastController> logger,
+            Irepositorio repositorio)
         {
             _logger = logger;
+            this.repositorio = repositorio;
         }
 
         [HttpGet]
         public IEnumerable<WeatherForecast> Get()
         {
+            var generos = repositorio.ObtenerTodosLosGeneros();
             var rng = new Random();
             return Enumerable.Range(1, 5).Select(index => new WeatherForecast
             {
@@ -34,6 +39,12 @@ namespace netCoreApi.Controllers
                 Summary = Summaries[rng.Next(Summaries.Length)]
             })
             .ToArray();
+        }
+
+        [HttpGet("guid")]
+        public Guid ObtenerGuidWeatherForecastController()
+        {
+            return repositorio.ObtenerGuid();
         }
     }
 }

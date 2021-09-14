@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\proyectos react\\react net core\\netCoreApi\\netCoreApi.csproj": {}
+    "C:\\proyectos react\\react y net core\\netCoreApi\\netCoreApi.csproj": {}
   },
   "projects": {
-    "C:\\proyectos react\\react net core\\netCoreApi\\netCoreApi.csproj": {
+    "C:\\proyectos react\\react y net core\\netCoreApi\\netCoreApi.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\proyectos react\\react net core\\netCoreApi\\netCoreApi.csproj",
+        "projectUniqueName": "C:\\proyectos react\\react y net core\\netCoreApi\\netCoreApi.csproj",
         "projectName": "netCoreApi",
-        "projectPath": "C:\\proyectos react\\react net core\\netCoreApi\\netCoreApi.csproj",
+        "projectPath": "C:\\proyectos react\\react y net core\\netCoreApi\\netCoreApi.csproj",
         "packagesPath": "C:\\Users\\lmendez\\.nuget\\packages\\",
-        "outputPath": "C:\\proyectos react\\react net core\\netCoreApi\\obj\\",
+        "outputPath": "C:\\proyectos react\\react y net core\\netCoreApi\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -44,6 +44,10 @@
         "net5.0": {
           "targetAlias": "net5.0",
           "dependencies": {
+            "Microsoft.AspNetCore.Authentication.JwtBearer": {
+              "target": "Package",
+              "version": "[5.0.10, )"
+            },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
               "version": "[5.6.3, )"
