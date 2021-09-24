@@ -10,10 +10,12 @@ namespace netCoreApi.Entidades
     public class Generos
     {
         public int Id { get; set; }
+
         [Required(ErrorMessage ="El campo {0} es requerido")]
         [StringLength(maximumLength:50)]
         [PrimeraLetraMauscula]//validacion por parametro
-        public string nombre { get; set; }
+        public string Nombre { get; set; }
+        public List<PeliculasGeneros> PeliculasGeneros { get; set; }
 
     }
 }

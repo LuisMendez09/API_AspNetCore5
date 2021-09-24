@@ -1,10 +1,15 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using netCoreApi.DTOs;
+using netCoreApi.DTOs.Generos;
 using netCoreApi.Entidades;
 using netCoreApi.Filtros;
+using netCoreApi.Utilidades;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,43 +23,79 @@ namespace netCoreApi.Controllers
     public class GenerosController:ControllerBase
     {
         private readonly ILogger<GenerosController> logger;
+        private readonly IMapper mapper;
+        private readonly ApplicationDbContext context;
 
-        public GenerosController(ILogger<GenerosController> logger)
+        public GenerosController(ILogger<GenerosController> logger,
+            IMapper mapper,
+            ApplicationDbContext context)
         {
             this.logger = logger;
+            this.mapper = mapper;
+            this.context = context;
         }
 
         [HttpGet]//api/generos
-        public ActionResult<List<Generos>> Get()
+        public async Task<ActionResult<List<GeneroDTO>>> Get([FromQuery] PaginacionDTO paginacionDTO)
         {
-            return new List<Generos> { new Generos { Id=1,nombre="Comedia"} };
+            var queryable = context.Generos.AsQueryable();
+            await HttpContext.InsertarParametrosPaginacionEnCabecera(queryable);
+            var generos = await queryable.OrderBy(x => x.Nombre).Paginar(paginacionDTO).ToListAsync();
+            return mapper.Map<List<GeneroDTO>>(generos);
+        }
+
+        [HttpGet("todos")]//api/generos
+        public async Task<ActionResult<List<GeneroDTO>>> Todos([FromQuery] PaginacionDTO paginacionDTO)
+        {
+            var generos = await context.Generos.OrderBy(x=>x.Nombre).ToListAsync();
+            return mapper.Map<List<GeneroDTO>>(generos);
         }
 
         //pasar varias variables=> [accion ("{variable}/{otra varaible}")]
         //valor por defecto => nombre='valor por defecto'
         //tipo de datos especifico=> variable:tipo de dato        
-        [HttpGet ("{id:int}")]//api/generos/1/accion
-        public async Task<ActionResult<Generos>> Get(int id)
+        [HttpGet ("{id:int}")]//api/generos/1
+        public async Task<ActionResult<GeneroDTO>> Get(int id)
         {
-            throw new NotImplementedException();
+            var genero = await context.Generos.FirstOrDefaultAsync(x => x.Id == id);
+            if (genero == null)
+                return NotFound();
+
+            return mapper.Map<GeneroDTO>(genero);
         }
 
         [HttpPost]
-        public ActionResult Post([FromBody] Generos genero)
+        public async Task<ActionResult> Post([FromBody] GeneroCreacionDTO generoCreacionDTO)
         {
-            throw new NotImplementedException();
+            var genero = mapper.Map<Generos>(generoCreacionDTO);
+            context.Add(genero);
+            await context.SaveChangesAsync();
+            return NoContent();
         }
 
-        [HttpPut]
-        public ActionResult Put()
+        [HttpPut("{id:int}")]
+        public async Task<ActionResult> Put(int id,[FromBody] GeneroCreacionDTO generoCreacionDTO)
         {
-            throw new NotImplementedException();
+            var genero = await context.Generos.FirstOrDefaultAsync(x => x.Id == id);
+
+            if (genero == null)
+                return NotFound();
+
+            genero = mapper.Map(generoCreacionDTO, genero);//actualiza las propiedades diferentes
+            await context.SaveChangesAsync();//actualiza en la base de datos
+            return NoContent();
         }
 
-        [HttpDelete]
-        public ActionResult Delete()
+        [HttpDelete("{id:int}")]
+        public async Task<ActionResult> Delete(int id)
         {
-            throw new NotImplementedException();
+            var existe = await context.Generos.AnyAsync(x => x.Id == id);
+            if (!existe)
+                return NotFound();
+
+            context.Remove(new Generos() { Id = id });
+            await context.SaveChangesAsync();
+            return NoContent();
         }
     }
 }
