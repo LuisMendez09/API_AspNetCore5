@@ -86,7 +86,7 @@ namespace netCoreApi
                         ValidateLifetime =true,
                         ValidateIssuerSigningKey = true,
                         IssuerSigningKey = new SymmetricSecurityKey(
-                            Encoding.UTF8.GetBytes(Configuration["llaveAwt"])),
+                            Encoding.UTF8.GetBytes(Configuration["llavejwt"])),
                         ClockSkew = TimeSpan.Zero
                     });
 
