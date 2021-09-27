@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using netCoreApi.Entidades;
 using System;
 using System.Collections.Generic;
@@ -7,8 +8,18 @@ using System.Threading.Tasks;
 
 namespace netCoreApi
 {
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : IdentityDbContext
     {
+        //configuracion el sistema de usuario de ASP.Net core
+        /**
+         * -para utilizar el sistema de usuario se tiene que instalar el paquete 
+         * -Identity.EntityFrameworkCore desde el administrador de paquetes NuGet
+         * -Luego en la clase AppilicaionDbContext tiene que eredar de la clase IdentityDbContext
+         * -Despues se realiza la migracion y actualizacion de las tablas de la base de datos con
+         * los comandos Add-Migration {SistemaDeUsuarios}-> nombre de la migracion y Update-Database
+         * -una vez echa la migracion se tiene que configurar los servicios en la clase startup
+         */
+
         public ApplicationDbContext(DbContextOptions options) : base(options)
         {
 
