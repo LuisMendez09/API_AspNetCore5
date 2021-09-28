@@ -21,6 +21,7 @@ using NetTopologySuite;
 using NetTopologySuite.Geometries;
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -32,6 +33,8 @@ namespace netCoreApi
     {
         public Startup(IConfiguration configuration)
         {
+            //se utiliza para desabilitar los claim por defecto
+            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
             Configuration = configuration;
         }
 
