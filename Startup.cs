@@ -1,15 +1,30 @@
+using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using netCoreApi.ApiBehavios;
+using netCoreApi.Controllers;
+using netCoreApi.Filtros;
+using netCoreApi.Utilidades;
+using NetTopologySuite;
+using NetTopologySuite.Geometries;
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace netCoreApi
@@ -18,6 +33,8 @@ namespace netCoreApi
     {
         public Startup(IConfiguration configuration)
         {
+            //se utiliza para desabilitar los claim por defecto
+            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
             Configuration = configuration;
         }
 
@@ -26,8 +43,67 @@ namespace netCoreApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddAutoMapper(typeof(Startup));
+            services.AddSingleton(provider =>
+                new MapperConfiguration(config =>
+                {
+                    var geometryFactory = provider.GetRequiredService<GeometryFactory>();
+                    config.AddProfile(new AutoMapperProfiles(geometryFactory));
+                }).CreateMapper());
+               
+          
+            services.AddSingleton<GeometryFactory>
+                (NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326));
 
-            services.AddControllers();
+            services.AddTransient<IAlmacenadorArchivos, AlmacenadorAzureStorage>();
+            //services.AddTransient<IAlmacenadorArchivos, AlmacenadorArchivosLocal>();
+            services.AddHttpContextAccessor();
+
+            services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseSqlServer(Configuration.GetConnectionString("defaultConnection"),
+                sqlserver => sqlserver.UseNetTopologySuite()));
+
+            services.AddCors(options =>
+            {
+                var frontendURL = Configuration.GetValue<string>("frontend_url");
+                options.AddDefaultPolicy(builder =>
+                {
+                    builder.WithOrigins(frontendURL).AllowAnyMethod().AllowAnyHeader()
+                    .WithExposedHeaders(new string[] { "cantidadTotalRegistros" });
+                });
+            });
+
+            /**
+             para poder usar la confiuracion de IdentityDbContext se tienen que agregar los siguientes servios
+             */
+            services.AddIdentity<IdentityUser, IdentityRole>()
+                .AddEntityFrameworkStores<ApplicationDbContext>()
+                .AddDefaultTokenProviders();
+
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(/**Configurar el servicio de autentificacion*/
+                    opciones=> opciones.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = false,
+                        ValidateAudience =false,
+                        ValidateLifetime =true,
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(
+                            Encoding.UTF8.GetBytes(Configuration["llavejwt"])),
+                        ClockSkew = TimeSpan.Zero
+                    });
+
+            services.AddAuthorization(opciones =>
+            {
+                opciones.AddPolicy("EsAdmin", policy => policy.RequireClaim("role", "admin"));
+            });
+
+            services.AddControllers(options =>
+            {
+                options.Filters.Add(typeof(FiltroDeExepcion));
+                options.Filters.Add(typeof(ParsearBadRequest));
+            }).ConfigureApiBehaviorOptions(BehaviorBadRequest.Parser);
+            
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "netCoreApi", Version = "v1" });
@@ -37,6 +113,7 @@ namespace netCoreApi
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -46,7 +123,13 @@ namespace netCoreApi
 
             app.UseHttpsRedirection();
 
+            app.UseStaticFiles();
+
             app.UseRouting();
+
+            app.UseCors();
+
+            app.UseAuthentication();
 
             app.UseAuthorization();
 
