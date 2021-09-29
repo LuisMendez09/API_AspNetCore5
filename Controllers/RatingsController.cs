@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 namespace netCoreApi.Controllers
 {
     [Route("api/rating")]
-    [ApiController]
+    [ApiController]    
     public class RatingsController : ControllerBase
     {
         private readonly UserManager<IdentityUser> userManager;

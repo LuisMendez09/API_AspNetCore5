@@ -1,8 +1,14 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using netCoreApi.DTOs;
 using netCoreApi.DTOs.AutenticacionUsuarios;
+using netCoreApi.Utilidades;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -15,22 +21,56 @@ namespace netCoreApi.Controllers
 {
     [Route("api/cuentas")]
     [ApiController]
-    public class CuentasController:ControllerBase
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
+    public class CuentasController : ControllerBase
     {
         private readonly UserManager<IdentityUser> userManager;
         private readonly SignInManager<IdentityUser> signInManager;
+        private readonly ApplicationDbContext context;
+        private readonly IMapper mapper;
         private readonly IConfiguration configuration;
 
         public CuentasController(UserManager<IdentityUser> userManager,
             SignInManager<IdentityUser> signInManager,
+            ApplicationDbContext context,
+            IMapper mapper,
             IConfiguration configuration)
         {
             this.userManager = userManager;
             this.signInManager = signInManager;
+            this.context = context;
+            this.mapper = mapper;
             this.configuration = configuration;
         }
 
+        [HttpGet("listadousuarios")]
+        public async Task<ActionResult<List<UsuarioDTO>>> ListadoUsuarios([FromQuery] PaginacionDTO paginacionDTO)
+        {
+            var querable = context.Users.AsQueryable();
+            await HttpContext.InsertarParametrosPaginacionEnCabecera(querable);
+            var usuarios = await querable.OrderBy(x => x.Email).Paginar(paginacionDTO).ToListAsync();
+
+            return mapper.Map<List<UsuarioDTO>>(usuarios);
+        }
+
+        [HttpPost("haceradmin")]
+        public async Task<ActionResult> HacerAdmin([FromBody]string adminId)
+        {
+            var usuario = await userManager.FindByIdAsync(adminId);
+            await userManager.AddClaimAsync(usuario, new Claim ( "role", "admin" ));
+            return NoContent();
+        }
+
+        [HttpPost("removeradmin")]
+        public async Task<ActionResult> RemoverrAdmin([FromBody] string adminId)
+        {
+            var usuario = await userManager.FindByIdAsync(adminId);
+            await userManager.RemoveClaimAsync(usuario, new Claim("role", "admin"));
+            return NoContent();
+        }
+
         [HttpPost("crear")]
+        [AllowAnonymous]
         public async Task<ActionResult<RespuestaAutentucacion>> Crear([FromBody] CredencialesUsuario credenciales)
         {
             var usuario = new IdentityUser { UserName = credenciales.Email, Email = credenciales.Email };
@@ -47,6 +87,7 @@ namespace netCoreApi.Controllers
         }
 
         [HttpPost("login")]
+        [AllowAnonymous]
         public async Task<ActionResult<RespuestaAutentucacion>> Login([FromBody] CredencialesUsuario credenciales)
         {
             var resultado = await signInManager.PasswordSignInAsync(credenciales.Email, credenciales.Password,

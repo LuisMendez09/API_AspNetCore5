@@ -18,7 +18,7 @@ namespace netCoreApi.Controllers
 {
     [ApiController]
     [Route("api/peliculas")]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme,Policy ="EsAdmin")]
     public class PelculasController : ControllerBase
     {
         private readonly ApplicationDbContext context;

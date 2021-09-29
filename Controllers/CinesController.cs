@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using netCoreApi.DTOs;
@@ -14,6 +16,7 @@ namespace netCoreApi.Controllers
 {
     [ApiController]
     [Route("api/cines")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
     public class CinesController:ControllerBase
     {
         private readonly ApplicationDbContext context;

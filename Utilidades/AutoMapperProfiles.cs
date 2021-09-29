@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Identity;
 using netCoreApi.DTOs.Actores;
+using netCoreApi.DTOs.AutenticacionUsuarios;
 using netCoreApi.DTOs.Cines;
 using netCoreApi.DTOs.Generos;
 using netCoreApi.DTOs.Peliculas;
@@ -42,6 +44,8 @@ namespace netCoreApi.Utilidades
                 .ForMember(x => x.Generos, options => options.MapFrom(MapearPeliculaGeneros))
                 .ForMember(x => x.Actores, options => options.MapFrom(MapearPeliculaActores))
                 .ForMember(x => x.Cines, options => options.MapFrom(MapearPeliculaCines));
+
+            CreateMap<IdentityUser, UsuarioDTO>();
         }
 
         private List<GeneroDTO> MapearPeliculaGeneros(Peliculas pelicula,PeliculaDTO peliculaDTO)

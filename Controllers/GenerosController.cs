@@ -19,8 +19,8 @@ namespace netCoreApi.Controllers
 {
     [Route("api/generos")]//endpoint
     [ApiController]
-    //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public class GenerosController:ControllerBase
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
+    public class GenerosController : ControllerBase
     {
         private readonly ILogger<GenerosController> logger;
         private readonly IMapper mapper;
@@ -45,6 +45,7 @@ namespace netCoreApi.Controllers
         }
 
         [HttpGet("todos")]//api/generos
+        [AllowAnonymous]
         public async Task<ActionResult<List<GeneroDTO>>> Todos([FromQuery] PaginacionDTO paginacionDTO)
         {
             var generos = await context.Generos.OrderBy(x=>x.Nombre).ToListAsync();
