@@ -111,11 +111,11 @@ namespace netCoreApi.Controllers
                 new Claim("email",credenciales.Email)
             };
 
-            var usuario = await userManager.FindByIdAsync(credenciales.Email);
+            var usuario = await userManager.FindByEmailAsync(credenciales.Email);
             var claimsDB = await userManager.GetClaimsAsync(usuario);
             claims.AddRange(claimsDB);
 
-            var llave = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["llaveAwt"]));
+            var llave = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["llavejwt"]));
             var creds = new SigningCredentials(llave, SecurityAlgorithms.HmacSha256);
 
             var expitacion = DateTime.UtcNow.AddYears(1);
